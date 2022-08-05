@@ -99,9 +99,11 @@ final class Central {
         )
         self.centralManager = CBCentralManager(
             delegate: centralManagerDelegate,
-            queue: nil
+            queue: centralQueue
         )
     }
+    
+    private let centralQueue = DispatchQueue(label: "com.philips.reactive_ble_mobile.main")
 
     var state: CBManagerState { return centralManager.state }
 
