@@ -99,9 +99,11 @@ final class Central {
         )
         self.centralManager = CBCentralManager(
             delegate: centralManagerDelegate,
-            queue: nil
+            queue: centralQueue
         )
     }
+    
+    private let centralQueue = DispatchQueue(label: "com.philips.reactive_ble_mobile.main")
 
     var state: CBManagerState { return centralManager.state }
 
@@ -159,13 +161,21 @@ final class Central {
         guard let peripheral = try? resolve(known: peripheralID)
         else { return }
 
-        centralManager.cancelPeripheralConnection(peripheral)
+        connectRegistry.updateTask(
+            key: peripheralID,
+            action: { $0.cancel(centralManager: centralManager, peripheral: peripheral, error: nil) }
+        )
     }
 
     func disconnectAll() {
         activePeripherals
             .values
-            .forEach(centralManager.cancelPeripheralConnection)
+            .forEach { (peripheral) in
+                connectRegistry.updateTask(
+                    key: peripheral.identifier,
+                    action: { $0.cancel(centralManager: centralManager, peripheral: peripheral, error: nil) }
+                )
+            }
     }
 
     func discoverServicesWithCharacteristics(
